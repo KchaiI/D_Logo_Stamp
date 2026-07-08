@@ -1,0 +1,6 @@
+# macOS
+.DS_Store
+
+# エージェント向け指示・設計ドキュメント（git 管理対象外）
+CLAUDE.md
+docs/
