@@ -4,3 +4,7 @@
 # エージェント向け指示・設計ドキュメント（git 管理対象外）
 CLAUDE.md
 docs/
+
+ml/assets/
+# GitHub の 100MB 制限を超えるためアーカイブは追跡しない
+ml/assets.zip
