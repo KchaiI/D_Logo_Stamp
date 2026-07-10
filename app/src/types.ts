@@ -4,6 +4,8 @@
 
 /** 1件のスタンプ獲得記録 */
 export type StampRecord = {
+  /** 記録の一意ID（1日複数個の記録・代表選択に使う） */
+  id: string;
   /** 獲得日 (YYYY-MM-DD) */
   date: string;
   /**
@@ -20,8 +22,16 @@ export type StampRecord = {
   box: [number, number, number, number];
 };
 
-/** 日付 → スタンプ記録 */
-export type StampsByDate = Record<string, StampRecord>;
+/** 1日分のスタンプ記録（複数）と、カレンダーに表示する代表スタンプのID */
+export type DayStamps = {
+  /** その日に獲得した記録（獲得順） */
+  records: StampRecord[];
+  /** カレンダーの日付セルに表示する代表記録の id */
+  selectedId: string;
+};
+
+/** 日付 → その日のスタンプ記録 */
+export type StampsByDate = Record<string, DayStamps>;
 
 /** MMKV の保存キー */
 export const STAMPS_KEY = "stamps_by_date";

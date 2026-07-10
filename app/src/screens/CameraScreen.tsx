@@ -4,7 +4,8 @@
  * - カメラ権限リクエスト
  * - 背面カメラのプレビュー表示
  * - 撮影 → ONNX 推論（同志社ロゴ検出）→ 検出枠 + スコア表示
- * - 検出できたら「スタンプを獲得」（1日1個ルール）
+ * - 検出できたら「スタンプを獲得」
+ *   （1日1個 / 複数個は ALLOW_MULTIPLE_STAMPS_PER_DAY で切り替え）
  */
 import React, { useCallback, useMemo, useState } from "react";
 import {
@@ -25,6 +26,7 @@ import {
   usePhotoOutput,
 } from "react-native-vision-camera";
 import { DetectionOverlay } from "../components/DetectionOverlay";
+import { ALLOW_MULTIPLE_STAMPS_PER_DAY } from "../config";
 import { detectLogo } from "../detection/detect";
 import { cropStamp } from "../stamp/crop";
 import {
@@ -65,6 +67,8 @@ export function CameraScreen() {
   const [captured, setCaptured] = useState<Captured | null>(null);
   const [analysis, setAnalysis] = useState<AnalysisState | null>(null);
   const [stampState, setStampState] = useState<StampState>("idle");
+  // 保存後の「今日◯個目」表示用（複数モードのみ使用）
+  const [savedCount, setSavedCount] = useState<number | null>(null);
 
   const isReviewing = captured != null;
 
@@ -86,6 +90,7 @@ export function CameraScreen() {
         const uri = tmpPath.startsWith("file://") ? tmpPath : `file://${tmpPath}`;
         setCaptured({ uri, width: image.width, height: image.height });
         setStampState("idle");
+        setSavedCount(null);
         setAnalysis({ phase: "analyzing" });
 
         const result = await detectLogo(image);
@@ -107,6 +112,7 @@ export function CameraScreen() {
     setCaptured(null);
     setAnalysis(null);
     setStampState("idle");
+    setSavedCount(null);
   }, []);
 
   const handleSaveStamp = useCallback(
@@ -115,7 +121,7 @@ export function CameraScreen() {
       setStampState("saving");
       try {
         const today = getTodayKey();
-        if (hasStampForDate(today)) {
+        if (!ALLOW_MULTIPLE_STAMPS_PER_DAY && hasStampForDate(today)) {
           setStampState("already");
           return;
         }
@@ -126,7 +132,12 @@ export function CameraScreen() {
           captured.height,
         );
         const result = await saveStamp(today, cropped.uri, best.score, best.box);
-        setStampState(result.status === "saved" ? "saved" : "already");
+        if (result.status === "saved") {
+          setSavedCount(result.countForDate);
+          setStampState("saved");
+        } else {
+          setStampState("already");
+        }
       } catch (e) {
         Alert.alert(
           "保存に失敗しました",
@@ -167,7 +178,9 @@ export function CameraScreen() {
     const detections =
       analysis?.phase === "done" ? analysis.detections : [];
     const best = analysis?.phase === "done" ? analysis.best : null;
-    const alreadyToday = hasStampForDate(getTodayKey());
+    // 複数モードでは「獲得済み」による保存ブロックはしない
+    const alreadyToday =
+      !ALLOW_MULTIPLE_STAMPS_PER_DAY && hasStampForDate(getTodayKey());
 
     return (
       <ScrollView style={styles.container} contentContainerStyle={styles.reviewContent}>
@@ -215,7 +228,9 @@ export function CameraScreen() {
 
             {stampState === "saved" && (
               <Text style={styles.successText}>
-                今日のスタンプを獲得しました！カレンダーで確認できます。
+                {ALLOW_MULTIPLE_STAMPS_PER_DAY && savedCount != null
+                  ? `今日${savedCount}個目のスタンプを獲得しました！カレンダーで確認できます。`
+                  : "今日のスタンプを獲得しました！カレンダーで確認できます。"}
               </Text>
             )}
             {(stampState === "already" ||
