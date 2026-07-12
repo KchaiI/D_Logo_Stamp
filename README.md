@@ -1,8 +1,8 @@
 # 同志社ロゴ スタンプラリーアプリ
 
-カメラで撮影した写真から同志社大学のロゴを **端末内（オンデバイス）AI推論** で検出し、検出したロゴ部分を切り抜いて日付ごとの「スタンプ」として記録する iOS アプリです。
+カメラで撮影した写真から同志社大学のロゴを **端末内（オンデバイス）AI推論** で検出し、検出したロゴ部分を切り抜いて日付ごとの「スタンプ」として記録する iOS アプリである。
 
-サーバーやクラウドは一切使わず、撮影画像・スタンプ画像・獲得履歴のすべてを端末内に永続化するオフライン完結型のアプリとして設計しています。
+サーバーやクラウドは一切使わず、撮影画像・スタンプ画像・獲得履歴のすべてを端末内に永続化するオフライン完結型のアプリとして設計している。
 
 ## デモフロー
 
@@ -26,7 +26,7 @@
 
 ## 推論モデル
 
-物体検出モデルとして **YOLOv8n**（Ultralytics）を使用しています。
+物体検出モデルとして **YOLOv8n**（Ultralytics）を使用している。
 
 | 項目 | 内容 |
 |---|---|
@@ -37,6 +37,12 @@
 | 出力 | `[1, 5, 8400]` の単一テンソル（各候補が `cx, cy, w, h, conf`） |
 | フォーマット | ONNX（opset 12） |
 | 実行環境 | `onnxruntime-react-native` によるオンデバイス推論 |
+
+推論モデルは YOLOv8n をベースにした1クラス物体検出モデルで、検出対象は同志社大学の三角形シンボルマークである。
+
+学習データは、透過PNG化したロゴ画像を背景画像に合成して作成した。背景には壁・紙・建物・机など、実際の撮影環境に近い画像を使用し、合成時にはロゴの位置・サイズ・回転・明るさなどを変化させて見え方のバリエーションを持たせている。
+
+学習は Google Colab 上で Ultralytics YOLO を使って行った。学習後、`best.pt` を ONNX 形式に変換し、React Native アプリ内で `onnxruntime-react-native` によりオンデバイス推論している。合成データによる学習だが、実写真でもロゴを検出できることを確認している。
 
 ### 推論パイプライン（`app/src/detection/`)
 
@@ -51,7 +57,7 @@
 
 ## 技術スタック
 
-- **React Native 0.86 / Expo SDK 57**（Expo Development Build 前提。ネイティブモジュールを含むため Expo Go では動作しません）
+- **React Native 0.86 / Expo SDK 57**（Expo Development Build 前提。ネイティブモジュールを含むため Expo Go では動作しない）
 - **TypeScript**
 - 推論: `onnxruntime-react-native`
 - カメラ: `react-native-vision-camera`
@@ -62,7 +68,7 @@
 
 ## データ設計
 
-獲得履歴は日付をキーに MMKV へ JSON で保存します。
+獲得履歴は日付をキーに MMKV へ JSON で保存する。
 
 ```ts
 type StampRecord = {
@@ -82,8 +88,8 @@ type DayStamps = {
 type StampsByDate = Record<string, DayStamps>; // 日付 → その日の記録
 ```
 
-- 画像パスは `documentDirectory` からの相対パスで保存し、アプリ更新でコンテナの絶対パスが変わっても壊れないようにしています
-- 旧形式（1日1件のみ）のデータは読み込み時に自動で新形式へ移行します
+- 画像パスは `documentDirectory` からの相対パスで保存し、アプリ更新でコンテナの絶対パスが変わっても壊れないようにしている
+- 旧形式（1日1件のみ）のデータは読み込み時に自動で新形式へ移行する
 
 ## ディレクトリ構成
 
@@ -105,7 +111,7 @@ type StampsByDate = Record<string, DayStamps>; // 日付 → その日の記録
 
 ## セットアップと実行
 
-ネイティブモジュール（VisionCamera / ONNX Runtime など）を含むため、**Expo Development Build** が必要です。
+ネイティブモジュール（VisionCamera / ONNX Runtime など）を含むため、**Expo Development Build** が必要である。
 
 ```bash
 cd app
@@ -118,7 +124,7 @@ eas build --profile development --platform ios
 npx expo start --dev-client
 ```
 
-実機での動作確認が前提です（カメラとオンデバイス推論を使うため、シミュレーターでは検証できません）。
+カメラとオンデバイス推論を使うためシミュレーターでは検証できず、実機での動作確認が前提となる。
 
 ### TestFlight 配布
 
@@ -128,7 +134,7 @@ eas build --profile production --platform ios
 eas submit --platform ios
 ```
 
-ビルド番号は EAS 側で自動インクリメントされます（`eas.json` の `autoIncrement`）。
+ビルド番号は EAS 側で自動インクリメントされる（`eas.json` の `autoIncrement`）。
 
 ## 設計方針
 
